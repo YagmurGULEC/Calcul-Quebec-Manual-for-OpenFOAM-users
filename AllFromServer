@@ -1,0 +1,46 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+getDir() {
+echo $1 | awk -F/ '
+{
+    n=NF-'$2'+1;
+    if(n<1)exit;
+    for (i=n;i<=NF;i++) {
+        printf("/%s",$i);
+    }
+}'
+}
+
+
+
+
+
+caseDirectory="/home/user/run/main"
+#if you want to send all the folders inside the directory above
+casesToRun=$(find $caseDirectory -maxdepth 1  -mindepth 1 -type d)
+#if you want to send specific case  inside the directory above
+#casesToRun="/home/user/run/main/casename1 /home/user/run/main/casename2" 
+
+for case in $casesToRun
+do
+   
+(
+cd $case 
+
+dir2=`getDir $(pwd) 4`#adjust the way you would like to save your case
+echo "/home/user/run$dir2"
+rsync -a   user@mp2b.calculquebec.ca:/home/user/run$dir2/  $(pwd)/
+if [ -f log.reconstructPar ] ; then
+   rm log.reconstructPar
+fi
+runApplication reconstructPar
+if [ -f log.sample ] ; then
+   rm log.sample
+fi
+runApplication sample
+
+)
+
+done

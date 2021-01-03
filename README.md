@@ -27,3 +27,15 @@ and save them in the directory intented.
 
 The script AllFromServer is for  the automization of transfering case directories to your local machine to post-process the results.
 
+You need to load several modules to run any OpenFOAM case, depending on which version you would like to use. 
+For OpenFOAM 2.3.1,
+module purge
+module load nixpkgs/16.09  gcc/4.8.5  openmpi/2.1.1
+module load openfoam/2.3.1
+
+For other versions you may check if they are installed already in the solver. 
+module avail openfoam 
+
+The modules needed to use OpenFOAM appears after writing module spider openfoam/2.3.1.
+
+

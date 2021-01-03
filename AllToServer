@@ -1,0 +1,70 @@
+#!/bin/sh
+
+cd ${0%/*} || exit 1    # run from this directory
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+getDir() {
+echo $1 | awk -F/ '
+{
+    n=NF-'$2'+1;
+    if(n<1)exit;
+    for (i=n;i<=NF;i++) {
+        printf("/%s",$i);
+    }
+}'
+}
+
+
+
+runRefineMesh ()
+{
+    echo "Running refineMesh on $PWD"
+    refineMesh -dict system/refineMeshDict > log.refineMesh 2>&1
+}
+
+caseDirectory="/home/user/run/main/"
+
+#if you want to send all the folders inside the directory above
+casesToRun=$(find $caseDirectory -maxdepth 1  -mindepth 1 -type d)
+
+#if you want to send specific folders inside the directory above
+
+#casesToRun="/home/user/run/main/casename1 /home/user/run/main/casename1" 
+
+for case in $casesToRun
+do
+   
+(
+cd $case 
+./Allclean
+runApplication blockMesh
+
+i=1
+if [ -f log.topoSet ] ; then
+   i=2
+fi
+while [ "$i" -lt 4 ] ; do
+    if [ -f log.topoSet ] ; then
+        mv log.topoSet log.topoSet.1
+    fi
+    cp system/topoSetDict.${i} system/topoSetDict
+    runApplication topoSet
+    runRefineMesh
+    cp -r 1e-06/polyMesh/* constant/polyMesh
+    rm -rf 1e-06
+    i=`expr $i + 1`
+done
+runApplication setFields
+runApplication decomposePar
+runApplication paraFoam#if you would like to check the mesh and the initial fields before sending the case
+dir2=`getDir $(pwd) 4`#you may adjust depending on which directory in the remote server to save
+echo "/home/user/run$dir2"
+#to open the necessary folder intented in the server to save your case
+ssh user@mp2b.calculquebec.ca "( mkdir -p /home/user/run$dir2)"
+
+scp -prq $(pwd)/. user@mp2b.calculquebec.ca:/home/user/run/$dir2/.
+ssh user@mp2b.calculquebec.ca "( cd  /home/user/$dir2/ && sbatch mpi_job.sh)"
+)
+
+done

@@ -1,0 +1,43 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+getDir() {
+echo $1 | awk -F/ '
+{
+    n=NF-'$2'+1;
+    if(n<1)exit;
+    for (i=n;i<=NF;i++) {
+        printf("/%s",$i);
+    }
+}'
+}
+
+
+#array=$(find . -mindepth 1 -maxdepth 1 -type d )
+#your case directory in your local machine
+caseDirectory="/home/user/casemaindirectory"
+
+
+#if you want to send all the folders inside the directory above
+casesToRun=$(find  $caseDirectory -maxdepth 1  -mindepth 1 -type d )
+
+
+for case in $casesToRun
+do
+   
+(
+cd $case 
+
+dir2=`getDir $(pwd) 5`
+echo $(pwd)
+echo "/home/user$dir2/"
+#generate csv files with csvdata.py existing in your case directory
+ssh user@mp2b.calculquebec.ca "( cd /home/user/$dir2 && touch case.foam && module load python/2.7.14 && module load paraview&&pvpython csvdata.py&& exit)"
+#
+scp   user@mp2b.calculquebec.ca:/home/user$dir2/*.csv  $(pwd)/.
+
+
+)
+
+done

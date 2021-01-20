@@ -38,4 +38,6 @@ module avail openfoam
 
 The modules needed to use OpenFOAM appears after writing module spider openfoam/2.3.1.
 
+For parallel runs, it may take a lot of time to reconstruct the data. Instead, you may extract csv files with AllFromServerCsv without waiting for reconstructPar.
+
 
